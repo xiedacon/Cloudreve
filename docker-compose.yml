@@ -2,16 +2,19 @@ version: "3.8"
 services:
   cloudreve:
     container_name: cloudreve
-    image: cloudreve/cloudreve:latest
+    build: ./
     restart: unless-stopped
     ports:
       - "5212:5212"
     volumes:
       - temp_data:/data
-      - ./cloudreve/uploads:/cloudreve/uploads
-      - ./cloudreve/conf.ini:/cloudreve/conf.ini
-      - ./cloudreve/cloudreve.db:/cloudreve/cloudreve.db
-      - ./cloudreve/avatar:/cloudreve/avatar
+      - ./data/uploads:/cloudreve/uploads
+      - ./data/conf.ini:/cloudreve/conf.ini
+      - ./data/cloudreve.db:/cloudreve/cloudreve.db
+      - ./data/avatar:/cloudreve/avatar
+    networks:
+      internal:
+        ipv4_address: 172.16.238.10
     depends_on:
       - aria2
   aria2:
@@ -19,11 +22,14 @@ services:
     image: p3terx/aria2-pro # third party image, please keep notice what you are doing
     restart: unless-stopped
     environment:
-      - RPC_SECRET=your_aria_rpc_token # aria rpc token, customize your own
       - RPC_PORT=6800
+      - RPC_SECRET=your_aria_rpc_token
     volumes:
-      - ./aria2/config:/config
       - temp_data:/data
+      - ./data/aria2/config:/config
+    networks:
+      internal:
+        ipv4_address: 172.16.238.11
 volumes:
   temp_data:
     driver: local
@@ -31,3 +37,10 @@ volumes:
       type: none
       device: $PWD/data
       o: bind
+networks:
+  internal:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.16.238.0/24"
+        - subnet: "2001:3984:3989::/64"

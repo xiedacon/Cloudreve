@@ -23,6 +23,8 @@ type database struct {
 type system struct {
 	Mode          string `validate:"eq=master|eq=slave"`
 	Listen        string `validate:"required"`
+	AdminEmail    string
+	AdminPassword string
 	Debug         bool
 	SessionSecret string
 	HashIDSalt    string

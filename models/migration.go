@@ -2,6 +2,9 @@ package model
 
 import (
 	"context"
+	"sort"
+	"strings"
+
 	"github.com/cloudreve/Cloudreve/v3/models/scripts/invoker"
 	"github.com/cloudreve/Cloudreve/v3/pkg/cache"
 	"github.com/cloudreve/Cloudreve/v3/pkg/conf"
@@ -9,8 +12,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-version"
 	"github.com/jinzhu/gorm"
-	"sort"
-	"strings"
 )
 
 // 是否需要迁移
@@ -19,7 +20,7 @@ func needMigration() bool {
 	return DB.Where("name = ?", "db_version_"+conf.RequiredDBVersion).First(&setting).Error != nil
 }
 
-//执行数据迁移
+// 执行数据迁移
 func migration() {
 	// 确认是否需要执行迁移
 	if !needMigration() {
@@ -75,7 +76,7 @@ func addDefaultPolicy() {
 			MaxSize:            0,
 			AutoRename:         true,
 			DirNameRule:        "uploads/{uid}/{path}",
-			FileNameRule:       "{uid}_{randomkey8}_{originname}",
+			FileNameRule:       "{originname}",
 			IsOriginLinkEnable: false,
 			OptionsSerialized: PolicyOption{
 				ChunkSize: 25 << 20, // 25MB
@@ -158,16 +159,15 @@ func addDefaultGroups() {
 
 func addDefaultUser() {
 	_, err := GetUserByID(1)
-	password := util.RandStringRunes(8)
 
 	// 未找到初始用户时，则创建
 	if gorm.IsRecordNotFoundError(err) {
 		defaultUser := NewUser()
-		defaultUser.Email = "admin@cloudreve.org"
-		defaultUser.Nick = "admin"
+		defaultUser.Email = conf.SystemConfig.AdminEmail
+		defaultUser.Nick = strings.Split(conf.SystemConfig.AdminEmail, "@")[0]
 		defaultUser.Status = Active
 		defaultUser.GroupID = 1
-		err := defaultUser.SetPassword(password)
+		err := defaultUser.SetPassword(conf.SystemConfig.AdminPassword)
 		if err != nil {
 			util.Log().Panic("Failed to create password: %s", err)
 		}
@@ -176,8 +176,8 @@ func addDefaultUser() {
 		}
 
 		c := color.New(color.FgWhite).Add(color.BgBlack).Add(color.Bold)
-		util.Log().Info("Admin user name: " + c.Sprint("admin@cloudreve.org"))
-		util.Log().Info("Admin password: " + c.Sprint(password))
+		util.Log().Info("Admin user name: " + c.Sprint(conf.SystemConfig.AdminEmail))
+		util.Log().Info("Admin password: " + c.Sprint(conf.SystemConfig.AdminPassword))
 	}
 }
 

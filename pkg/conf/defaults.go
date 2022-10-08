@@ -1,5 +1,7 @@
 package conf
 
+import "github.com/cloudreve/Cloudreve/v3/pkg/util"
+
 // RedisConfig Redis服务器配置
 var RedisConfig = &redis{
 	Network:  "tcp",
@@ -18,9 +20,11 @@ var DatabaseConfig = &database{
 
 // SystemConfig 系统公用配置
 var SystemConfig = &system{
-	Debug:  false,
-	Mode:   "master",
-	Listen: ":5212",
+	Mode:          "master",
+	Listen:        ":5212",
+	AdminEmail:    "admin@cloudreve.org",
+	AdminPassword: util.RandStringRunes(8),
+	Debug:         false,
 }
 
 // CORSConfig 跨域配置

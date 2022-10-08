@@ -5,22 +5,16 @@ FROM golang:1.17-alpine as cloudreve_builder
 RUN apk update && apk add --no-cache wget curl git yarn build-base gcc abuild binutils binutils-doc gcc-doc zip
 
 WORKDIR /cloudreve_builder
-RUN git clone --recurse-submodules https://github.com/cloudreve/Cloudreve.git
+COPY . ./Cloudreve
 
 # build frontend
-WORKDIR /cloudreve_builder/Cloudreve/assets
-ENV GENERATE_SOURCEMAP false
-
-RUN yarn install --network-timeout 1000000
-RUN yarn run build
+# pre-build
 
 # build backend
 WORKDIR /cloudreve_builder/Cloudreve
-RUN zip -r - assets/build >assets.zip
-RUN tag_name=$(git describe --tags) \
-    && export COMMIT_SHA=$(git rev-parse --short HEAD) \
-    && go build -a -o cloudreve -ldflags " -X 'github.com/HFO4/cloudreve/pkg/conf.BackendVersion=$tag_name' -X 'github.com/HFO4/cloudreve/pkg/conf.LastCommit=$COMMIT_SHA'"
 
+RUN go env -w GOPROXY="https://goproxy.io,direct" \
+    && go build -a -o cloudreve
 
 # build final image
 FROM alpine:latest
@@ -36,7 +30,7 @@ RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
 COPY --from=cloudreve_builder /cloudreve_builder/Cloudreve/cloudreve ./
 
 # prepare permissions and aria2 dir
-RUN chmod +x ./cloudreve && mkdir -p /data/aria2 && chmod -R 766 /data/aria2
+RUN chmod +x ./cloudreve
 
 EXPOSE 5212
 VOLUME ["/cloudreve/uploads", "/cloudreve/avatar", "/data"]
