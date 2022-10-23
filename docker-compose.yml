@@ -8,10 +8,10 @@ services:
       - "5212:5212"
     volumes:
       - temp_data:/data
-      - ./data/uploads:/cloudreve/uploads
-      - ./data/conf.ini:/cloudreve/conf.ini
-      - ./data/cloudreve.db:/cloudreve/cloudreve.db
-      - ./data/avatar:/cloudreve/avatar
+      - ./data/cloudreve/uploads:/cloudreve/uploads
+      - ./data/cloudreve/conf.ini:/cloudreve/conf.ini
+      - ./data/cloudreve/cloudreve.db:/cloudreve/cloudreve.db
+      - ./data/cloudreve/avatar:/cloudreve/avatar
     networks:
       internal:
         ipv4_address: 172.16.238.10
@@ -26,7 +26,7 @@ services:
       - RPC_SECRET=your_aria_rpc_token
     volumes:
       - temp_data:/data
-      - ./data/aria2/config:/config
+      - ./data/cloudreve/aria2/config:/config
     networks:
       internal:
         ipv4_address: 172.16.238.11
@@ -35,7 +35,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: $PWD/data
+      device: $PWD/data/cloudreve
       o: bind
 networks:
   internal:
