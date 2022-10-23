@@ -2,6 +2,7 @@ FROM golang:1.17-alpine as cloudreve_builder
 
 
 # install dependencies and build tools
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
 RUN apk update && apk add --no-cache wget curl git yarn build-base gcc abuild binutils binutils-doc gcc-doc zip
 
 WORKDIR /cloudreve_builder
