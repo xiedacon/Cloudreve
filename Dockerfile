@@ -1,6 +1,5 @@
 FROM golang:1.17-alpine as cloudreve_builder
 
-
 # install dependencies and build tools
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
 RUN apk update && apk add --no-cache wget curl git yarn build-base gcc abuild binutils binutils-doc gcc-doc zip
@@ -22,7 +21,8 @@ FROM alpine:latest
 
 WORKDIR /cloudreve
 
-RUN apk update && apk add --no-cache tzdata
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+RUN apk update && apk add --no-cache tzdata ffmpeg
 
 # we using the `Asia/Shanghai` timezone by default, you can do modification at your will
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
