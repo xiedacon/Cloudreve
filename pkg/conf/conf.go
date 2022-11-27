@@ -66,6 +66,10 @@ type cors struct {
 	ExposeHeaders    []string
 }
 
+type webdav struct {
+	Ignore []string
+}
+
 var cfg *ini.File
 
 const defaultConf = `[System]
@@ -113,6 +117,7 @@ func Init(path string) {
 		"Redis":      RedisConfig,
 		"CORS":       CORSConfig,
 		"Slave":      SlaveConfig,
+		"Webdav":     WebdavConfig,
 	}
 	for sectionName, sectionStruct := range sections {
 		err = mapSection(sectionName, sectionStruct)

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -27,6 +28,7 @@ var (
 	isEject    bool
 	confPath   string
 	scriptName string
+	root       string
 )
 
 //go:embed assets.zip
@@ -35,11 +37,18 @@ var staticZip string
 var staticFS fs.FS
 
 func init() {
-	flag.StringVar(&confPath, "c", util.RelativePath("conf.ini"), "Path to the config file.")
+	e, _ := os.Executable()
+
+	flag.StringVar(&root, "r", path.Dir(e), "Root path of process.")
+	flag.StringVar(&confPath, "c", "conf.ini", "Path to the config file.")
 	flag.BoolVar(&isEject, "eject", false, "Eject all embedded static files.")
 	flag.StringVar(&scriptName, "database-script", "", "Name of database util script.")
 	flag.Parse()
 
+	if root != "" {
+		_ = os.Setenv("CLOUDREVE_ROOT", root)
+	}
+	confPath = util.RelativePath(confPath)
 	staticFS = archiver.ArchiveFS{
 		Stream: io.NewSectionReader(strings.NewReader(staticZip), 0, int64(len(staticZip))),
 		Format: archiver.Zip{},

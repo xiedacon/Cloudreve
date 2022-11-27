@@ -53,7 +53,6 @@ func RelativePath(name string) string {
 	if filepath.IsAbs(name) {
 		return name
 	}
-	e, _ := os.Executable()
-	return filepath.Join(filepath.Dir(e), name)
-}
 
+	return filepath.Join(os.Getenv("CLOUDREVE_ROOT"), name)
+}

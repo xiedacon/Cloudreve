@@ -96,7 +96,7 @@ func (fs *FileSystem) GeneratePreviewImage(ctx context.Context, file *model.File
 	previewName := sourceName + model.GetSettingByNameWithDefault("preview_file_suffix", "._preview.jpeg")
 
 	// 判断是否可以生成预览图
-	if !IsInExtensionList(HandledVideoExtension, sourceName) {
+	if !IsInExtensionList(HandledVideoExtension, sourceName) || file.Size == 0 {
 		return
 	}
 

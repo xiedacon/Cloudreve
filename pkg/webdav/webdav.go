@@ -12,12 +12,14 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	model "github.com/cloudreve/Cloudreve/v3/models"
+	"github.com/cloudreve/Cloudreve/v3/pkg/conf"
 	"github.com/cloudreve/Cloudreve/v3/pkg/filesystem"
 	"github.com/cloudreve/Cloudreve/v3/pkg/filesystem/fsctx"
 	"github.com/cloudreve/Cloudreve/v3/pkg/util"
@@ -218,7 +220,7 @@ func (h *Handler) confirmLocks(r *http.Request, src, dst string, fs *filesystem.
 	}, 0, nil
 }
 
-//OK
+// OK
 func (h *Handler) handleOptions(w http.ResponseWriter, r *http.Request, fs *filesystem.FileSystem) (status int, err error) {
 	reqPath, status, err := h.stripPrefix(r.URL.Path, fs.User.ID)
 	if err != nil {
@@ -340,9 +342,27 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request, fs *filesyst
 
 	fileSize, err := strconv.ParseUint(r.Header.Get("Content-Length"), 10, 64)
 	if err != nil {
-		return http.StatusMethodNotAllowed, err
+		// macos
+		fileSize, err = strconv.ParseUint(r.Header.Get("X-Expected-Entity-Length"), 10, 64)
+		if err != nil {
+			return http.StatusMethodNotAllowed, err
+		}
 	}
+
 	fileName := path.Base(reqPath)
+	if conf.WebdavConfig.Ignore != nil {
+		for _, pattern := range conf.WebdavConfig.Ignore {
+			matched, err := regexp.MatchString(pattern, fileName)
+			if err != nil {
+				util.Log().Warning("Failed to match pattern %q for filename %q", pattern, fileName)
+				continue
+			}
+			if matched {
+				return http.StatusCreated, nil
+			}
+		}
+	}
+
 	filePath := path.Dir(reqPath)
 	fileData := fsctx.FileStream{
 		MIMEType:    r.Header.Get("Content-Type"),
@@ -375,6 +395,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request, fs *filesyst
 		fs.Use("AfterUploadCanceled", filesystem.HookClearFileSize)
 		fs.Use("AfterUploadCanceled", filesystem.HookCancelContext)
 		fs.Use("AfterUpload", filesystem.GenericAfterUpdate)
+		fs.Use("AfterUpload", filesystem.HookGenerateThumb)
 		fs.Use("AfterValidateFailed", filesystem.HookCleanFileContent)
 		fs.Use("AfterValidateFailed", filesystem.HookClearFileSize)
 		ctx = context.WithValue(ctx, fsctx.FileModelCtx, *originFile)
@@ -783,10 +804,11 @@ const (
 // infiniteDepth. Parsing any other string returns invalidDepth.
 //
 // Different WebDAV methods have further constraints on valid depths:
-//	- PROPFIND has no further restrictions, as per section 9.1.
-//	- COPY accepts only "0" or "infinity", as per section 9.8.3.
-//	- MOVE accepts only "infinity", as per section 9.9.2.
-//	- LOCK accepts only "0" or "infinity", as per section 9.10.3.
+//   - PROPFIND has no further restrictions, as per section 9.1.
+//   - COPY accepts only "0" or "infinity", as per section 9.8.3.
+//   - MOVE accepts only "infinity", as per section 9.9.2.
+//   - LOCK accepts only "0" or "infinity", as per section 9.10.3.
+//
 // These constraints are enforced by the handleXxx methods.
 func parseDepth(s string) int {
 	switch s {

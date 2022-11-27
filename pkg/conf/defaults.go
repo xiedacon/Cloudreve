@@ -53,4 +53,8 @@ var UnixConfig = &unix{
 	ProxyHeader: "X-Forwarded-For",
 }
 
+var WebdavConfig = &webdav{
+	Ignore: nil,
+}
+
 var OptionOverwrite = map[string]interface{}{}
