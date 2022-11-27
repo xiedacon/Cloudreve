@@ -2,6 +2,9 @@ package filesystem
 
 import (
 	"context"
+	"io"
+	"strings"
+
 	model "github.com/cloudreve/Cloudreve/v3/models"
 	"github.com/cloudreve/Cloudreve/v3/pkg/cache"
 	"github.com/cloudreve/Cloudreve/v3/pkg/cluster"
@@ -9,8 +12,6 @@ import (
 	"github.com/cloudreve/Cloudreve/v3/pkg/filesystem/fsctx"
 	"github.com/cloudreve/Cloudreve/v3/pkg/serializer"
 	"github.com/cloudreve/Cloudreve/v3/pkg/util"
-	"io/ioutil"
-	"strings"
 )
 
 // Hook 钩子函数
@@ -122,7 +123,7 @@ func HookDeleteTempFile(ctx context.Context, fs *FileSystem, file fsctx.FileHead
 func HookCleanFileContent(ctx context.Context, fs *FileSystem, file fsctx.FileHeader) error {
 	// 清空内容
 	return fs.Handler.Put(ctx, &fsctx.FileStream{
-		File:     ioutil.NopCloser(strings.NewReader("")),
+		File:     io.NopCloser(strings.NewReader("")),
 		SavePath: file.Info().SavePath,
 		Size:     0,
 		Mode:     fsctx.Overwrite,
@@ -240,6 +241,7 @@ func HookGenerateThumb(ctx context.Context, fs *FileSystem, fileHeader fsctx.Fil
 		go func() {
 			defer fs.recycleLock.Unlock()
 			_, _ = fs.Handler.Delete(ctx, []string{fileMode.SourceName + model.GetSettingByNameWithDefault("thumb_file_suffix", "._thumb")})
+			_, _ = fs.Handler.Delete(ctx, []string{fileMode.SourceName + model.GetSettingByNameWithDefault("preview_file_suffix", "._preview.jpeg")})
 			fs.GenerateThumbnail(ctx, fileMode)
 		}()
 	}

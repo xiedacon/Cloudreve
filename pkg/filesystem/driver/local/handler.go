@@ -188,6 +188,8 @@ func (handler Driver) Delete(ctx context.Context, files []string) ([]string, err
 
 		// 尝试删除文件的缩略图（如果有）
 		_ = os.Remove(util.RelativePath(value + model.GetSettingByNameWithDefault("thumb_file_suffix", "._thumb")))
+		// 尝试删除文件的预览图（如果有）
+		_ = os.Remove(util.RelativePath(value + model.GetSettingByNameWithDefault("preview_file_suffix", "._preview.jpeg")))
 	}
 
 	return deleteFailed, retErr
